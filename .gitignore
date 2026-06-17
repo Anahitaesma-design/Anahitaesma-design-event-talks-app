@@ -13,6 +13,8 @@ env/
 ENV/
 .env
 
+a.py
+
 # ——— Distribution / packaging ———
 dist/
 build/
