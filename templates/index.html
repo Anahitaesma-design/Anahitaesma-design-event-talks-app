@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BigQuery Release Notes</title>
+  <meta name="description" content="Browse the latest BigQuery release notes and share them on X (Twitter) directly from your browser." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <!-- ======== HEADER ======== -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <svg class="bq-logo" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <circle cx="24" cy="24" r="22" fill="url(#bqGrad)"/>
+          <path d="M14 30 L24 12 L34 30 Z" fill="white" opacity="0.9"/>
+          <rect x="18" y="26" width="12" height="4" rx="2" fill="white" opacity="0.6"/>
+          <defs>
+            <linearGradient id="bqGrad" x1="0" y1="0" x2="48" y2="48">
+              <stop offset="0%" stop-color="#4285F4"/>
+              <stop offset="100%" stop-color="#1a73e8"/>
+            </linearGradient>
+          </defs>
+        </svg>
+        <div>
+          <h1 class="site-title">BigQuery Release Notes</h1>
+          <p class="site-subtitle">Stay current with the latest updates</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span class="feed-meta" id="feedMeta">—</span>
+        <button id="refreshBtn" class="btn btn-primary" onclick="loadReleases()">
+          <svg class="btn-icon spinner-icon" id="spinnerIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+          </svg>
+          Refresh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ======== MAIN ======== -->
+  <main class="main-content">
+
+    <!-- Filter bar -->
+    <div class="filter-bar" id="filterBar" style="display:none">
+      <div class="filter-inner">
+        <div class="search-wrap">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input id="searchInput" type="text" placeholder="Search releases…" class="search-input" oninput="filterCards()" />
+        </div>
+        <div class="chip-group" id="chipGroup">
+          <!-- Chips injected by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- State: loading skeleton -->
+    <div class="cards-grid" id="skeletonGrid">
+      <div class="card skeleton" aria-hidden="true"><div class="skel-line skel-title"></div><div class="skel-line"></div><div class="skel-line short"></div></div>
+      <div class="card skeleton" aria-hidden="true"><div class="skel-line skel-title"></div><div class="skel-line"></div><div class="skel-line short"></div></div>
+      <div class="card skeleton" aria-hidden="true"><div class="skel-line skel-title"></div><div class="skel-line"></div><div class="skel-line short"></div></div>
+    </div>
+
+    <!-- State: error -->
+    <div class="state-box" id="errorBox" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="state-icon err-icon" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/><path stroke-linecap="round" d="M12 8v4m0 4h.01"/>
+      </svg>
+      <p class="state-title">Could not load release notes</p>
+      <p class="state-sub" id="errorMsg"></p>
+      <button class="btn btn-primary mt-12" onclick="loadReleases()">Try again</button>
+    </div>
+
+    <!-- State: cards -->
+    <div class="cards-grid" id="cardsGrid" style="display:none"></div>
+
+    <!-- State: no results -->
+    <div class="state-box" id="noResults" style="display:none">
+      <p class="state-title">No matching releases</p>
+      <p class="state-sub">Try adjusting your search or filter.</p>
+    </div>
+
+  </main>
+
+  <!-- ======== TWEET MODAL ======== -->
+  <div class="modal-overlay" id="tweetModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" style="display:none">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <svg viewBox="0 0 24 24" fill="currentColor" class="x-logo" aria-hidden="true">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.732-8.84L1.254 2.25H8.08l4.271 5.647 5.893-5.647Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
+          </svg>
+          <h2 id="modalTitle" class="modal-title">Compose Tweet</h2>
+        </div>
+        <button class="modal-close" id="modalCloseBtn" aria-label="Close" onclick="closeTweetModal()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <textarea id="tweetTextarea" class="tweet-textarea" maxlength="280" rows="6" oninput="updateCharCount()"></textarea>
+        <div class="tweet-footer">
+          <div class="char-ring-wrap">
+            <svg class="char-ring" viewBox="0 0 36 36" aria-hidden="true">
+              <circle class="char-ring-bg" cx="18" cy="18" r="15"/>
+              <circle class="char-ring-fill" id="charRingFill" cx="18" cy="18" r="15" stroke-dasharray="0 94.2"/>
+            </svg>
+            <span class="char-count" id="charCount">0</span>
+          </div>
+          <button class="btn btn-tweet" id="tweetSendBtn" onclick="openTwitter()">
+            <svg viewBox="0 0 24 24" fill="currentColor" class="btn-icon" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.742l7.732-8.84L1.254 2.25H8.08l4.271 5.647 5.893-5.647Zm-1.161 17.52h1.833L7.084 4.126H5.117L17.083 19.77Z"/>
+            </svg>
+            Tweet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
